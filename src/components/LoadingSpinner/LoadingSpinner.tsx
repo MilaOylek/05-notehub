@@ -1,8 +1,15 @@
-import styles from './LoadingSpinner.module.css';
+import styles from "./LoadingSpinner.module.css";
 
-function LoadingSpinner() {
+interface LoadingSpinnerProps {
+  overlay?: boolean;
+}
+
+function LoadingSpinner({ overlay = false }: LoadingSpinnerProps) {
   return (
-    <div className={styles.spinnerContainer}>
+    <div
+      className={`${styles.spinnerContainer} ${overlay ? styles.overlay : ""}`}
+    >
+      {" "}
       <div className={styles.spinner}></div>
       <p>Loading...</p>
     </div>

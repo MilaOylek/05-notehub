@@ -1,4 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useDebounce } from "use-debounce";
+
 import {
   QueryClient,
   QueryClientProvider,
@@ -19,31 +21,37 @@ const queryClient = new QueryClient();
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [rawSearchTerm, setRawSearchTerm] = useState("");
+  const [debouncedSearchTerm] = useDebounce(rawSearchTerm, 500);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data, isLoading, error, isError } = useQuery<
+  const { data, isLoading, error, isError, isFetching } = useQuery<
     PaginatedResponse<Note>,
-    Error,
-    PaginatedResponse<Note>,
-    (string | number)[]
+    Error
   >({
-    queryKey: ["notes", currentPage, searchTerm],
-    queryFn: () => fetchNotes(currentPage, 12, searchTerm),
+    queryKey: ["notes", currentPage, debouncedSearchTerm],
+    queryFn: () => fetchNotes(currentPage, 12, debouncedSearchTerm),
     staleTime: 5 * 60 * 1000,
+    placeholderData: (previousData) => previousData,
   });
+
+  const [lastFetchedSearchTerm, setLastFetchedSearchTerm] = useState("");
+
+  useEffect(() => {
+    if (debouncedSearchTerm !== lastFetchedSearchTerm) {
+      setCurrentPage(1);
+      setLastFetchedSearchTerm(debouncedSearchTerm);
+    }
+  }, [debouncedSearchTerm, lastFetchedSearchTerm]);
 
   const handlePageChange = useCallback((selectedItem: { selected: number }) => {
     const newPage = selectedItem.selected + 1;
     setCurrentPage(newPage);
   }, []);
 
-  const handleSearchChange = useCallback((value: string) => { 
-    if (value !== searchTerm) {
-      setSearchTerm(value);
-      setCurrentPage(1);
-    } 
-    }, [searchTerm]);
+  const handleSearchChange = useCallback((value: string) => {
+    setRawSearchTerm(value);
+  }, []);
 
   const handleCreateNoteClick = () => {
     setIsModalOpen(true);
@@ -53,7 +61,7 @@ function AppContent() {
     setIsModalOpen(false);
   };
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return <LoadingSpinner />;
   }
 
@@ -62,14 +70,16 @@ function AppContent() {
   }
 
   if (!data || !data.notes || data.notes.length === 0) {
+    if (isFetching) {
+      return <LoadingSpinner />;
+    }
     return <p>No notes found.</p>;
   }
 
   return (
     <div className={styles.app}>
       <header className={styles.toolbar}>
-        {}
-        <SearchBox onSearch={handleSearchChange} />
+        <SearchBox value={rawSearchTerm} onChange={handleSearchChange} />
         <Pagination
           currentPage={currentPage}
           totalPages={data.totalPages}
@@ -80,6 +90,7 @@ function AppContent() {
         </button>
       </header>
 
+      {isFetching && <LoadingSpinner overlay={true} />}
       <NoteList notes={data.notes} />
 
       {isModalOpen && <NoteModal onClose={handleCloseModal} />}

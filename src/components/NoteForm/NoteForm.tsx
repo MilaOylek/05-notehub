@@ -7,11 +7,9 @@ import {
 } from "formik";
 import * as Yup from "yup";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  createNote,
-  type CreateNotePayload,
-  type Tag,
-} from "../../services/noteService";
+import {createNote} from "../../services/noteService";
+import {type CreateNotePayload, type Tag } from "../../types/note";
+
 import styles from "./NoteForm.module.css";
 
 interface NoteFormProps {

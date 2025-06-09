@@ -1,3 +1,4 @@
+import ReactPaginate from "react-paginate";
 import styles from "./Pagination.module.css";
 
 interface PaginationProps {
@@ -11,41 +12,33 @@ function Pagination({
   totalPages,
   onPageChange,
 }: PaginationProps) {
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-
-  const handlePageClick = (pageNumber: number) => {
-    onPageChange({ selected: pageNumber - 1 });
+  const handlePageClick = (selectedItem: { selected: number }) => {
+    onPageChange(selectedItem);
   };
 
   return (
     <div className={styles.pagination}>
-      <button
-        onClick={() => handlePageClick(currentPage - 1)}
-        disabled={currentPage === 1}
-        className={styles.button}
-      >
-        Previous
-      </button>
-
-      {pages.map((pageNumber) => (
-        <button
-          key={pageNumber}
-          onClick={() => handlePageClick(pageNumber)}
-          className={`${styles.button} ${
-            currentPage === pageNumber ? styles.active : ""
-          }`}
-        >
-          {pageNumber}
-        </button>
-      ))}
-
-      <button
-        onClick={() => handlePageClick(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className={styles.button}
-      >
-        Next
-      </button>
+      <ReactPaginate
+        breakLabel="..."
+        nextLabel="Next >"
+        onPageChange={handlePageClick}
+        pageRangeDisplayed={3}
+        marginPagesDisplayed={2}
+        pageCount={totalPages}
+        previousLabel="< Previous"
+        renderOnZeroPageCount={null}
+        containerClassName={styles.paginationContainer}
+        pageClassName={styles.pageItem}
+        pageLinkClassName={styles.pageLink}
+        previousClassName={styles.pageItem}
+        previousLinkClassName={styles.pageLink}
+        nextClassName={styles.pageItem}
+        nextLinkClassName={styles.pageLink}
+        breakClassName={styles.pageItem}
+        breakLinkClassName={styles.pageLink}
+        activeClassName={styles.activePage}
+        forcePage={currentPage - 1}
+      />
     </div>
   );
 }

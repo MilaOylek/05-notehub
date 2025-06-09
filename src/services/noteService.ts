@@ -1,7 +1,5 @@
 import axios from "axios";
-import { type Note, type PaginatedResponse } from "../types/note";
-
-export type Tag = "Todo" | "Work" | "Personal" | "Meeting" | "Shopping";
+import { type Note, type PaginatedResponse, type CreateNotePayload } from "../types/note"; 
 
 const API_BASE_URL = "https://notehub-public.goit.study/api";
 const TOKEN = import.meta.env.VITE_NOTEHUB_TOKEN;
@@ -11,6 +9,7 @@ if (!TOKEN) {
     "VITE_NOTEHUB_TOKEN is not set. Please check your .env.local file."
   );
 }
+
 const notehubApi = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -29,12 +28,10 @@ export const fetchNotes = async (
       page,
       perPage,
     };
-
     if (search) {
       params.search = search;
     }
-
-    const response = await notehubApi.get("/notes", {
+    const response = await notehubApi.get<PaginatedResponse<Note>>("/notes", {
       params,
     });
     return response.data;
@@ -53,17 +50,11 @@ export const fetchNotes = async (
   }
 };
 
-export interface CreateNotePayload {
-  title: string;
-  content: string;
-  tag: Tag;
-}
-
 export const createNote = async (
   noteData: CreateNotePayload
 ): Promise<Note> => {
   try {
-    const response = await notehubApi.post("/notes", noteData);
+    const response = await notehubApi.post<Note>("/notes", noteData);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -71,7 +62,6 @@ export const createNote = async (
         "Error creating note:",
         error.response?.data || error.message
       );
-
       if (error.response?.data?.validation) {
         console.error(
           "API Validation details:",
@@ -84,13 +74,9 @@ export const createNote = async (
   }
 };
 
-export interface DeleteNoteResponse {
-  message: string;
-}
-
-export const deleteNote = async (id: string): Promise<DeleteNoteResponse> => {
+export const deleteNote = async (id: number): Promise<Note> => {
   try {
-    const response = await notehubApi.delete(`/notes/${id}`);
+    const response = await notehubApi.delete<Note>(`/notes/${id}`);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
