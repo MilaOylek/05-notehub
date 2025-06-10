@@ -8,7 +8,9 @@ import {
 } from "@tanstack/react-query";
 
 import { fetchNotes } from "../../services/noteService";
-import { type PaginatedResponse, type Note } from "../../types/note";
+import { type PaginatedResponse} from "../../types/note";
+import { type Note } from "../../types/note";
+
 import NoteList from "../NoteList/NoteList";
 import Pagination from "../Pagination/Pagination";
 import SearchBox from "../SearchBox/SearchBox";
@@ -32,6 +34,7 @@ function AppContent() {
     queryKey: ["notes", currentPage, debouncedSearchTerm],
     queryFn: () => fetchNotes(currentPage, 12, debouncedSearchTerm),
     staleTime: 5 * 60 * 1000,
+   
     placeholderData: (previousData) => previousData,
   });
 
@@ -61,6 +64,7 @@ function AppContent() {
     setIsModalOpen(false);
   };
 
+
   if (isLoading && !data) {
     return <LoadingSpinner />;
   }
@@ -69,29 +73,29 @@ function AppContent() {
     return <ErrorMessage message={error?.message || "Failed to load notes."} />;
   }
 
-  if (!data || !data.notes || data.notes.length === 0) {
-    if (isFetching) {
-      return <LoadingSpinner />;
-    }
-    return <p>No notes found.</p>;
-  }
-
   return (
     <div className={styles.app}>
       <header className={styles.toolbar}>
         <SearchBox value={rawSearchTerm} onChange={handleSearchChange} />
-        <Pagination
-          currentPage={currentPage}
-          totalPages={data.totalPages}
-          onPageChange={handlePageChange}
-        />
+        {data && data.totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={data.totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
         <button className={styles.button} onClick={handleCreateNoteClick}>
           Create note +
         </button>
       </header>
 
       {isFetching && <LoadingSpinner overlay={true} />}
-      <NoteList notes={data.notes} />
+
+      {data && data.notes && data.notes.length > 0 ? (
+        <NoteList notes={data.notes} />
+      ) : (
+        <p className={styles.noNotesMessage}>No notes found.</p>
+      )}
 
       {isModalOpen && <NoteModal onClose={handleCloseModal} />}
     </div>
